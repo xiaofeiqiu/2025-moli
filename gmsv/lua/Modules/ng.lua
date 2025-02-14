@@ -202,6 +202,16 @@ function commandsNormal.daka(charIndex)
   NLG.UpChar(charIndex)
 end
 
+function commandsNormal.zhongzu(charIndex)
+  isSuccess = Char.SetData(charIndex, %对象_种族%, %种族_人型%);
+  if isSuccess == 1 then
+    NLG.SystemMessage(charIndex, "你已经变成神族了！");
+  else
+    NLG.SystemMessage(charIndex, "失败了！");
+  end
+  NLG.SystemMessage(charIndex, "当前 %对象_种族% 的值为：" .. tostring(Char.GetData(charIndex, %对象_种族%)));
+end
+
 function commandsNormal.redoDp(charIndex)
   local total = (Char.GetData(charIndex, CONST.CHAR_等级) - 1) * 4 + 30;
   local s = { CONST.CHAR_体力, CONST.CHAR_力量, CONST.CHAR_强度, CONST.CHAR_速度, CONST.CHAR_魔法 }
