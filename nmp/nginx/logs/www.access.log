@@ -1,0 +1,8 @@
+127.0.0.1 - - [13/Feb/2025:18:09:26 -0800] "GET / HTTP/1.1" 200 928 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:09:26 -0800] "GET /favicon.ico HTTP/1.1" 404 188 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:09:39 -0800] "POST /reg.php HTTP/1.1" 200 46 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:09:44 -0800] "GET /reg.php HTTP/1.1" 200 41 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:22:58 -0800] "GET /favicon.ico HTTP/1.1" 404 188 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:23:02 -0800] "POST /reg.php HTTP/1.1" 200 107 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:23:40 -0800] "GET /favicon.ico HTTP/1.1" 404 188 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
+127.0.0.1 - - [13/Feb/2025:18:23:57 -0800] "POST /reg.php HTTP/1.1" 200 46 "http://127.0.0.1/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" "-"
