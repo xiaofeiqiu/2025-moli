@@ -126,28 +126,36 @@ end
 ---@private
 function ModuleBase:migrate()
   if self.migrations then
-    local ret = SQL.querySQL('select ifnull(max(id), 0) version from lua_migration where module = \'' .. self.name .. '\';');
-    local version = tonumber(ret[1][1]);
+    local ret = SQL.querySQL("select ifnull(max(id), 0) version from lua_migration where module = '" .. self.name .. "';")
+    local version = 0
+    if type(ret) == "table" and ret[1] and ret[1][1] then
+      version = tonumber(ret[1][1])
+    elseif type(ret) == "number" then
+      version = ret
+    end
+
     table.sort(self.migrations, function(a, b)
-      return b.version - a.version > 0
+      return a.version < b.version
     end)
+
     for i, migration in ipairs(self.migrations) do
       if migration.version > version then
         self:logInfo('run migration: ' .. migration.version)
-        version = migration.version;
+        version = migration.version
         if type(migration.value) == 'function' then
-          migration.value();
+          migration.value()
         elseif type(migration.value) == 'string' then
-          SQL.querySQL(migration.value);
+          SQL.querySQL(migration.value)
         end
-        SQL.querySQL('insert into lua_migration (id, name, module) values ('
-          .. SQL.sqlValue(migration.version) .. ', '
-          .. SQL.sqlValue(migration.name) .. ', '
-          .. SQL.sqlValue(self.name) .. ');');
+        SQL.querySQL('insert into lua_migration (id, name, module) values (' ..
+          SQL.sqlValue(migration.version) .. ', ' ..
+          SQL.sqlValue(migration.name) .. ', ' ..
+          SQL.sqlValue(self.name) .. ');')
       end
     end
   end
 end
+
 
 function ModuleBase:log(level, msg, ...)
   log(self.name, level, msg, ...)

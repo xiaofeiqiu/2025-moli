@@ -1,4 +1,4 @@
 count=0
 countitemid=0
-globaltimera=240
-globaltimerb=240
+globaltimera=60
+globaltimerb=60
