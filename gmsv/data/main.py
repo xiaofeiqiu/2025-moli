@@ -344,14 +344,37 @@ class SkillManagerApp(tk.Tk):
     def create_buttons(self, parent, tree, data_type):
         frame = tk.Frame(parent)
         frame.pack(side='bottom', fill='x')
+
         btn_add = tk.Button(frame, text="添加", command=lambda: self.add_record(data_type))
         btn_edit = tk.Button(frame, text="编辑", command=lambda: self.edit_record(tree, data_type))
         btn_delete = tk.Button(frame, text="删除", command=lambda: self.delete_record(tree, data_type))
         btn_refresh = tk.Button(frame, text="刷新", command=lambda: self.refresh_tree(data_type))
+        btn_save = tk.Button(frame, text="保存", command=lambda: self.save_data(data_type))  # 添加保存按钮
+
         btn_add.pack(side='left', padx=5, pady=5)
         btn_edit.pack(side='left', padx=5, pady=5)
         btn_delete.pack(side='left', padx=5, pady=5)
         btn_refresh.pack(side='left', padx=5, pady=5)
+        btn_save.pack(side='left', padx=5, pady=5)  # 显示保存按钮
+
+    def save_data(self, data_type):
+        """根据数据类型保存更改到文件"""
+        if data_type == "skills" and hasattr(self, 'skill_file'):
+            self.data_manager.save_skills(self.skill_file)
+            messagebox.showinfo("保存", "Skills 保存成功")
+        elif data_type == "techs" and hasattr(self, 'tech_file'):
+            self.data_manager.save_techs(self.tech_file)
+            messagebox.showinfo("保存", "Techs 保存成功")
+        elif data_type == "skilllvs" and hasattr(self, 'skilllv_file'):
+            self.data_manager.save_skilllvs(self.skilllv_file)
+            messagebox.showinfo("保存", "SkillLv 保存成功")
+        elif data_type == "jobs" and hasattr(self, 'job_file'):
+            self.data_manager.save_jobs(self.job_file)
+            messagebox.showinfo("保存", "Jobs 保存成功")
+        else:
+            messagebox.showwarning("保存失败", f"{data_type} 文件未加载，无法保存！")
+
+
     
     def auto_load_default_files(self):
         cur_dir = os.path.dirname(os.path.abspath(__file__))
