@@ -12,7 +12,7 @@ usepartyexplist=0
 //设置战斗获得的经验倍数,最低为1
 baseexprate=5
 //设置战斗技能经验倍数,最低为1
-battleskillexprate=20
+battleskillexprate=200
 //设置生成采集技能经验倍数,最低为1
 productskillexprate=20
 #################################其他设置#####################################
