@@ -74,9 +74,6 @@ class DataManager:
 
     def load_jobs(self, filepath):
         self.jobs = self.load_file(filepath)
-        print(f"Loaded {len(self.jobs)} jobs from {filepath}")
-        for i, row in enumerate(self.jobs):
-            print(f"Job row {i}: {row}")
 
     def save_file(self, filepath, data):
         try:
@@ -109,9 +106,10 @@ class DataManager:
             skill_id = lvl[1]
             job_id = lvl[2]
             max_level = lvl[3]
+            
             skill = next((s for s in self.skills if len(s) > 1 and s[1] == skill_id), None)
-            tech = next((t for t in self.techs if len(t) > 6 and t[5] == skill_id and t[6] == "1"), None)
             job = next((j for j in self.jobs if len(j) > 1 and j[1] == job_id), None)
+            
             job_name = job[0] if job else ""
             job_no = job[1] if job else ""
             skill_name = skill[0] if skill else ""
@@ -119,10 +117,7 @@ class DataManager:
             skill_type = skill[3] if skill and len(skill) > 3 else ""
             learn_cost = skill[6] if skill and len(skill) > 6 else ""
             weapon_limit = skill[8] if skill and len(skill) > 8 else ""
-            # 对技能效果名称采用处理后的规则（参见 load_techs 预处理，这里直接使用 tech[0]）
-            effect_name = tech[0] if tech else ""
-            effect_params = tech[2] if tech and len(tech) > 2 else ""
-            effect_level = tech[6] if tech and len(tech) > 6 else ""
+            
             joined.append([
                 job_name,
                 job_no,
@@ -131,12 +126,10 @@ class DataManager:
                 skill_type,
                 learn_cost,
                 weapon_limit,
-                max_level,
-                effect_name,
-                effect_params,
-                effect_level
+                max_level
             ])
         return joined
+
 
 # 编辑窗口，编辑和添加时字段前显示列名称
 class RecordEditor(tk.Toplevel):
@@ -175,7 +168,7 @@ class SkillManagerApp(tk.Tk):
             "techs": ["技能名称", "技能性质", "技能效果", "未知", "图挡代码", "关联技能代号", "技能等级", "技能种类", "技能范围", "耗魔量", "使用者"],
             "skilllvs": ["唯一ID", "技能代号", "职业代号", "最高等级"],
             "jobs": ["职业名称", "职业编号", "类型", "转职金钱", "转职声望"],
-            "config": ["职业名称", "职业编号", "技能名称", "技能代号", "技能种类", "学习费用", "武器限制", "最高等级", "技能效果名称", "技能效果参数", "技能效果等级"]
+            "config": ["职业名称", "职业编号", "技能名称", "技能代号", "技能种类", "学习费用", "武器限制", "最高等级"]
         }
         self.create_menu()
         self.create_widgets()
@@ -231,6 +224,7 @@ class SkillManagerApp(tk.Tk):
         btn_query = tk.Button(top_frame, text="查询", command=self.refresh_config_details)
         btn_query.pack(side='left', padx=5)
         self.tree_config = self.create_treeview(self.tab_config, self.col_names["config"])
+
         
         self.create_buttons(self.tab_skills, self.tree_skills, "skills")
         self.create_buttons(self.tab_techs, self.tree_techs, "techs")
@@ -262,13 +256,10 @@ class SkillManagerApp(tk.Tk):
     
     def auto_load_default_files(self):
         cur_dir = os.path.dirname(os.path.abspath(__file__))
-        print(f"Current directory: {cur_dir}")
-        print("Files in current directory:", os.listdir(cur_dir))
         skill_path = os.path.join(cur_dir, "skill.txt")
         tech_path = os.path.join(cur_dir, "tech.txt")
         skilllv_path = os.path.join(cur_dir, "skilllv.txt")
         jobs_path = os.path.join(cur_dir, "jobs.txt")
-        print(f"Looking for jobs.txt at: {jobs_path}")
         if os.path.exists(skill_path):
             self.data_manager.load_skills(skill_path)
             self.skill_file = skill_path
@@ -277,15 +268,16 @@ class SkillManagerApp(tk.Tk):
             self.data_manager.load_techs(tech_path)
             self.tech_file = tech_path
             self.refresh_tree("techs")
-        if os.path.exists(skilllv_path):
-            self.data_manager.load_skilllvs(skilllv_path)
-            self.skilllv_file = skilllv_path
-            self.refresh_tree("skilllvs")
         if os.path.exists(jobs_path):
             self.data_manager.load_jobs(jobs_path)
             self.job_file = jobs_path
             self.refresh_tree("jobs")
             self.update_job_combobox()
+        if os.path.exists(skilllv_path):
+            self.data_manager.load_skilllvs(skilllv_path)
+            self.skilllv_file = skilllv_path
+            self.refresh_tree("skilllvs")
+        
         else:
             print(f"jobs.txt not found in {cur_dir}")
     
@@ -343,6 +335,10 @@ class SkillManagerApp(tk.Tk):
             tree = self.tree_skills
             data = self.data_manager.skills
             cols = self.col_names["skills"]
+        elif data_type == "jobs":
+            tree = self.tree_jobs
+            data = self.data_manager.jobs
+            cols = self.col_names["jobs"]
         elif data_type == "techs":
             tree = self.tree_techs
             data = self.data_manager.techs
@@ -351,17 +347,47 @@ class SkillManagerApp(tk.Tk):
             tree = self.tree_skilllvs
             data = self.data_manager.skilllvs
             cols = self.col_names["skilllvs"]
-        elif data_type == "jobs":
-            tree = self.tree_jobs
-            data = self.data_manager.jobs
-            cols = self.col_names["jobs"]
+
+            # 创建一个职业编号 -> 职业名称的映射表
+            job_mapping = {j[1]: j[0] for j in self.data_manager.jobs if len(j) > 1}
+            print(job_mapping)
+
+            # 创建一个技能代号 -> 技能名称的映射表
+            tech_mapping = {t[5]: t[0] for t in self.data_manager.techs if len(t) > 5}
+            
+            processed_data = []
+            for row in data:
+                if len(row) < 3:
+                    continue
+
+                skill_id = row[1]  # 获取技能代号
+                job_id = row[2]  # 获取职业代号
+
+                # 查找技能名称，如果找不到就显示原技能代号
+                skill_name = tech_mapping.get(skill_id, skill_id)
+                
+
+                # 查找职业名称，如果找不到就显示原职业代号
+                job_name = job_mapping.get(job_id, job_id)
+
+                processed_row = [row[0], skill_name, job_name] + row[3:]  # 替换技能代号和职业代号
+                processed_data.append(processed_row)
+
+            data = processed_data  # 只影响显示
+
         else:
             return
+
+        # 清空 TreeView
         for item in tree.get_children():
             tree.delete(item)
+
+        # 重新插入处理后的数据
         for row in data:
             row_extended = row + [""] * (len(cols) - len(row))
             tree.insert("", "end", values=row_extended)
+
+
     
     def update_job_combobox(self):
         """更新职业下拉框，允许用户输入并支持过滤"""
