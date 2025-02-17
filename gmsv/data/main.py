@@ -76,12 +76,19 @@ class DataManager:
         self.jobs = self.load_file(filepath)
 
     def save_file(self, filepath, data):
+        """Overwrite file while ensuring all data is written line by line."""
+        if not data:  # 🚨 Prevent overwriting with empty data
+            print(f"⚠️ Warning: Attempted to save empty file {filepath}, operation aborted.")
+            return
+
         try:
-            with open(filepath, 'w', encoding='gb18030') as f:
+            with open(filepath, 'w', encoding='gb18030') as f:  # ✅ Overwrite the file
                 for row in data:
-                    f.write('\t'.join(row) + '\n')
+                    row_str = '\t'.join(map(str, row))  # ✅ Convert each item to a string
+                    f.write(row_str + '\n')  # ✅ Ensure each row is on a new line
         except Exception as e:
             print(f"Error writing file {filepath}: {e}")
+
 
     def save_skills(self, filepath):
         self.save_file(filepath, self.skills)
@@ -290,7 +297,7 @@ class SkillManagerApp(tk.Tk):
         """根据查询内容搜索并更新表格"""
         query = query.lower()  # 统一转换为小写，支持大小写不敏感搜索
 
-        # 获取原始数据
+        # 获取原始数据和对应的列
         if data_type == "skills":
             data = self.data_manager.skills
         elif data_type == "techs":
@@ -302,44 +309,40 @@ class SkillManagerApp(tk.Tk):
         else:
             return
 
-        # 如果是 SkillLv，进行名称映射
+        # 针对 SkillLv 进行名称映射，同时保留原始索引
+        filtered_data = []
         if data_type == "skilllvs":
-            # 创建 `技能代号 -> 技能名称` 映射
+            # 创建 技能代号 -> 技能名称 映射
             skill_mapping = {t[1]: t[0] for t in self.data_manager.skills if len(t) > 5}
-            
-            # 创建 `职业代号 -> 职业名称` 映射
+            # 创建 职业代号 -> 职业名称 映射
             job_mapping = {j[1]: j[0] for j in self.data_manager.jobs if len(j) > 1}
-            
-            # 处理显示数据，把代号转换为名称
-            processed_data = []
-            for row in data:
+            for i, row in enumerate(data):
                 if len(row) < 3:
                     continue
-
-                skill_id = row[1]  # 获取技能代号
-                job_id = row[2]  # 获取职业代号
-
-                skill_name = skill_mapping.get(skill_id, skill_id)  # 找不到就显示代号
-                job_name = job_mapping.get(job_id, job_id)  # 找不到就显示代号
-
-                processed_row = [row[0], skill_name, job_name] + row[3:]  # 替换技能代号和职业代号
-                processed_data.append(processed_row)
-            
-            data = processed_data  # 只影响 UI 显示
+                # 原始代号
+                skill_id = row[1]
+                job_id = row[2]
+                # 映射为名称（找不到时保留原值）
+                skill_name = skill_mapping.get(skill_id, skill_id)
+                job_name = job_mapping.get(job_id, job_id)
+                # 构造显示行，同时保留原始索引 i
+                processed_row = [row[0], skill_name, job_name] + row[3:]
+                if any(query in str(cell).lower() for cell in processed_row):
+                    filtered_data.append((i, processed_row))
+        else:
+            # 其它数据类型，遍历原始数据时记录原始索引
+            for i, row in enumerate(data):
+                if any(query in str(cell).lower() for cell in row):
+                    filtered_data.append((i, row))
 
         # 清空表格
         for item in tree.get_children():
             tree.delete(item)
 
-        # 进行模糊匹配
-        filtered_data = []
-        for row in data:
-            if any(query in str(cell).lower() for cell in row):
-                filtered_data.append(row)
+        # 插入过滤后的数据，并设置 iid 为原始数据的索引（转换为字符串）
+        for original_index, row in filtered_data:
+            tree.insert("", "end", iid=str(original_index), values=row)
 
-        # 重新插入匹配的数据
-        for row in filtered_data:
-            tree.insert("", "end", values=row)
 
     def create_buttons(self, parent, tree, data_type):
         frame = tk.Frame(parent)
@@ -357,17 +360,43 @@ class SkillManagerApp(tk.Tk):
         btn_refresh.pack(side='left', padx=5, pady=5)
         btn_save.pack(side='left', padx=5, pady=5)  # 显示保存按钮
 
+
     def save_data(self, data_type):
-        """根据数据类型保存更改到文件"""
-        if data_type == "skills" and hasattr(self, 'skill_file'):
+        """根据数据类型保存更改到文件，SkillLv 需要转换回代号"""
+        if data_type == "skilllvs" and hasattr(self, 'skilllv_file'):
+            # 1️⃣ 创建 技能名称 -> 技能代号 映射
+            skill_name_to_id = {t[0]: t[1] for t in self.data_manager.skills if len(t) > 5}
+
+            # 2️⃣ 创建 职业名称 -> 职业代号 映射
+            job_name_to_id = {j[0]: j[1] for j in self.data_manager.jobs if len(j) > 1}
+
+            # 3️⃣ 还原 SkillLv 表中的名称 -> 代号
+            processed_data = []
+            for row in self.data_manager.skilllvs:
+                if len(row) < 3:
+                    continue
+
+                skill_name = row[1]
+                job_name = row[2]
+
+                # 用映射找到代号，找不到就保留原值
+                skill_id = skill_name_to_id.get(skill_name, skill_name)
+                job_id = job_name_to_id.get(job_name, job_name)
+
+                # 还原为 [唯一ID, 技能代号, 职业代号, 最高等级]
+                processed_data.append([row[0], skill_id, job_id] + row[3:])
+
+            # 4️⃣ 存储 SkillLv 数据
+            self.data_manager.skilllvs = processed_data
+            self.data_manager.save_skilllvs(self.skilllv_file)
+            messagebox.showinfo("保存", "SkillLv 保存成功")
+
+        elif data_type == "skills" and hasattr(self, 'skill_file'):
             self.data_manager.save_skills(self.skill_file)
             messagebox.showinfo("保存", "Skills 保存成功")
         elif data_type == "techs" and hasattr(self, 'tech_file'):
             self.data_manager.save_techs(self.tech_file)
             messagebox.showinfo("保存", "Techs 保存成功")
-        elif data_type == "skilllvs" and hasattr(self, 'skilllv_file'):
-            self.data_manager.save_skilllvs(self.skilllv_file)
-            messagebox.showinfo("保存", "SkillLv 保存成功")
         elif data_type == "jobs" and hasattr(self, 'job_file'):
             self.data_manager.save_jobs(self.job_file)
             messagebox.showinfo("保存", "Jobs 保存成功")
@@ -375,7 +404,6 @@ class SkillManagerApp(tk.Tk):
             messagebox.showwarning("保存失败", f"{data_type} 文件未加载，无法保存！")
 
 
-    
     def auto_load_default_files(self):
         cur_dir = os.path.dirname(os.path.abspath(__file__))
         skill_path = os.path.join(cur_dir, "skill.txt")
@@ -472,7 +500,6 @@ class SkillManagerApp(tk.Tk):
 
             # 创建一个职业编号 -> 职业名称的映射表
             job_mapping = {j[1]: j[0] for j in self.data_manager.jobs if len(j) > 1}
-
             # 创建一个技能代号 -> 技能名称的映射表
             tech_mapping = {t[1]: t[0] for t in self.data_manager.skills if len(t) > 5}
             
@@ -486,8 +513,6 @@ class SkillManagerApp(tk.Tk):
 
                 # 查找技能名称，如果找不到就显示原技能代号
                 skill_name = tech_mapping.get(skill_id, skill_id)
-                
-
                 # 查找职业名称，如果找不到就显示原职业代号
                 job_name = job_mapping.get(job_id, job_id)
 
@@ -503,10 +528,11 @@ class SkillManagerApp(tk.Tk):
         for item in tree.get_children():
             tree.delete(item)
 
-        # 重新插入处理后的数据
-        for row in data:
+        # 重新插入处理后的数据，同时指定 iid 为原始数据的索引
+        for idx, row in enumerate(data):
             row_extended = row + [""] * (len(cols) - len(row))
-            tree.insert("", "end", values=row_extended)
+            tree.insert("", "end", iid=str(idx), values=row_extended)
+
 
 
     
@@ -586,15 +612,16 @@ class SkillManagerApp(tk.Tk):
         if not selected:
             messagebox.showwarning("编辑", "请选择一行")
             return
-        item = tree.item(selected[0])
-        values = list(item['values'])
-        index = tree.index(selected[0])
+        # 直接使用 iid 作为索引（这里 iid 是字符串，需要转换成整数）
+        index = int(selected[0])
+        values = list(tree.item(selected[0])['values'])
         data = self.get_data_list(data_type)
         cols = self.col_names[data_type]
         def callback(rec):
             data[index] = rec
             self.refresh_tree(data_type)
         RecordEditor(self, values, cols, callback)
+
     
     def delete_record(self, tree, data_type):
         selected = tree.selection()
