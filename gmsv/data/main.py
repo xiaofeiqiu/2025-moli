@@ -364,14 +364,29 @@ class SkillManagerApp(tk.Tk):
             tree.insert("", "end", values=row_extended)
     
     def update_job_combobox(self):
-        job_list = []
-        for job in self.data_manager.jobs:
-            if len(job) >= 2:
-                job_list.append(f"{job[1]}: {job[0]}")
-        print("Update job_combobox, job list:", job_list)
-        self.job_combobox['values'] = job_list
-        if job_list:
-            self.job_combobox.current(0)
+        """更新职业下拉框，允许用户输入并支持过滤"""
+        self.job_list = [f"{job[1]}: {job[0]}" for job in self.data_manager.jobs if len(job) >= 2]
+        
+        # 允许输入
+        self.job_combobox.config(state="normal")
+        self.job_combobox['values'] = self.job_list
+        
+        if self.job_list:
+            self.job_combobox.set(self.job_list[0])  # 设置默认值
+        
+        # 绑定输入事件以支持过滤
+        self.job_combobox.bind("<KeyRelease>", self.filter_combobox)
+
+    def filter_combobox(self, event):
+        """根据用户输入动态过滤职业选项"""
+        value = self.job_combobox.get().lower()
+        
+        # 筛选包含用户输入的选项
+        filtered = [job for job in self.job_list if value in job.lower()]
+        
+        # 更新下拉框选项
+        self.job_combobox['values'] = filtered
+
     
     def refresh_config_details(self):
         all_joined = self.data_manager.join_all()
