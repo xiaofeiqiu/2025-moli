@@ -288,6 +288,8 @@ class SkillManagerApp(tk.Tk):
     
     def search_tree(self, tree, query, data_type):
         """根据查询内容搜索并更新表格"""
+        query = query.lower()  # 统一转换为小写，支持大小写不敏感搜索
+
         # 获取原始数据
         if data_type == "skills":
             data = self.data_manager.skills
@@ -299,23 +301,45 @@ class SkillManagerApp(tk.Tk):
             data = self.data_manager.jobs
         else:
             return
-        
+
+        # 如果是 SkillLv，进行名称映射
+        if data_type == "skilllvs":
+            # 创建 `技能代号 -> 技能名称` 映射
+            skill_mapping = {t[1]: t[0] for t in self.data_manager.skills if len(t) > 5}
+            
+            # 创建 `职业代号 -> 职业名称` 映射
+            job_mapping = {j[1]: j[0] for j in self.data_manager.jobs if len(j) > 1}
+            
+            # 处理显示数据，把代号转换为名称
+            processed_data = []
+            for row in data:
+                if len(row) < 3:
+                    continue
+
+                skill_id = row[1]  # 获取技能代号
+                job_id = row[2]  # 获取职业代号
+
+                skill_name = skill_mapping.get(skill_id, skill_id)  # 找不到就显示代号
+                job_name = job_mapping.get(job_id, job_id)  # 找不到就显示代号
+
+                processed_row = [row[0], skill_name, job_name] + row[3:]  # 替换技能代号和职业代号
+                processed_data.append(processed_row)
+            
+            data = processed_data  # 只影响 UI 显示
+
         # 清空表格
         for item in tree.get_children():
             tree.delete(item)
 
-        # 执行模糊搜索
+        # 进行模糊匹配
         filtered_data = []
-        query = query.lower()
-        
         for row in data:
             if any(query in str(cell).lower() for cell in row):
                 filtered_data.append(row)
-        
+
         # 重新插入匹配的数据
         for row in filtered_data:
             tree.insert("", "end", values=row)
-
 
     def create_buttons(self, parent, tree, data_type):
         frame = tk.Frame(parent)
@@ -339,15 +363,15 @@ class SkillManagerApp(tk.Tk):
             self.data_manager.load_skills(skill_path)
             self.skill_file = skill_path
             self.refresh_tree("skills")
-        if os.path.exists(tech_path):
-            self.data_manager.load_techs(tech_path)
-            self.tech_file = tech_path
-            self.refresh_tree("techs")
         if os.path.exists(jobs_path):
             self.data_manager.load_jobs(jobs_path)
             self.job_file = jobs_path
             self.refresh_tree("jobs")
             self.update_job_combobox()
+        if os.path.exists(tech_path):
+            self.data_manager.load_techs(tech_path)
+            self.tech_file = tech_path
+            self.refresh_tree("techs")
         if os.path.exists(skilllv_path):
             self.data_manager.load_skilllvs(skilllv_path)
             self.skilllv_file = skilllv_path
@@ -425,10 +449,9 @@ class SkillManagerApp(tk.Tk):
 
             # 创建一个职业编号 -> 职业名称的映射表
             job_mapping = {j[1]: j[0] for j in self.data_manager.jobs if len(j) > 1}
-            print(job_mapping)
 
             # 创建一个技能代号 -> 技能名称的映射表
-            tech_mapping = {t[5]: t[0] for t in self.data_manager.techs if len(t) > 5}
+            tech_mapping = {t[1]: t[0] for t in self.data_manager.skills if len(t) > 5}
             
             processed_data = []
             for row in data:
