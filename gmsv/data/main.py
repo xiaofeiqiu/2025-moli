@@ -210,10 +210,11 @@ class SkillManagerApp(tk.Tk):
         self.notebook.add(self.tab_config, text="配置详情")
         
         # 为各表创建 Treeview，并设置预设列名
-        self.tree_skills = self.create_treeview(self.tab_skills, self.col_names["skills"])
-        self.tree_techs = self.create_treeview(self.tab_techs, self.col_names["techs"])
-        self.tree_skilllvs = self.create_treeview(self.tab_skilllvs, self.col_names["skilllvs"])
-        self.tree_jobs = self.create_treeview(self.tab_jobs, self.col_names["jobs"])
+        self.tree_skills = self.create_treeview(self.tab_skills, self.col_names["skills"], "skills")
+        self.tree_techs = self.create_treeview(self.tab_techs, self.col_names["techs"], "techs")
+        self.tree_skilllvs = self.create_treeview(self.tab_skilllvs, self.col_names["skilllvs"], "skilllvs")
+        self.tree_jobs = self.create_treeview(self.tab_jobs, self.col_names["jobs"], "jobs")
+
         
         # 配置详情页顶部增加职业选择区域
         top_frame = tk.Frame(self.tab_config)
@@ -223,7 +224,7 @@ class SkillManagerApp(tk.Tk):
         self.job_combobox.pack(side='left', padx=5)
         btn_query = tk.Button(top_frame, text="查询", command=self.refresh_config_details)
         btn_query.pack(side='left', padx=5)
-        self.tree_config = self.create_treeview(self.tab_config, self.col_names["config"])
+        self.tree_config = self.create_treeview_no_search(self.tab_config, self.col_names["config"])
 
         
         self.create_buttons(self.tab_skills, self.tree_skills, "skills")
@@ -231,17 +232,91 @@ class SkillManagerApp(tk.Tk):
         self.create_buttons(self.tab_skilllvs, self.tree_skilllvs, "skilllvs")
         self.create_buttons(self.tab_jobs, self.tree_jobs, "jobs")
     
-    def create_treeview(self, parent, col_names):
-        tree = ttk.Treeview(parent, columns=col_names, show="headings")
+    def create_treeview(self, parent, col_names, data_type):
+        """创建表格视图，并在顶部添加搜索框"""
+        frame = tk.Frame(parent)
+        frame.pack(fill='both', expand=True)
+        
+        # 搜索框
+        search_frame = tk.Frame(frame)
+        search_frame.pack(fill='x', padx=5, pady=2)
+        tk.Label(search_frame, text="搜索:").pack(side="left")
+        
+        search_entry = tk.Entry(search_frame)
+        search_entry.pack(side="left", fill="x", expand=True)
+        
+        # Treeview 表格
+        tree = ttk.Treeview(frame, columns=col_names, show="headings")
         tree.pack(fill='both', expand=True, side='left')
+
+        # 配置表头
         for col in col_names:
             tree.heading(col, text=col)
             tree.column(col, width=100)
-        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=tree.yview)
+        
+        # 滚动条
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='right', fill='y')
+        
+        # 绑定搜索框事件
+        search_entry.bind("<KeyRelease>", lambda event: self.search_tree(tree, search_entry.get(), data_type))
+
         return tree
     
+    def create_treeview_no_search(self, parent, col_names):
+        """创建不带搜索框的表格视图"""
+        frame = tk.Frame(parent)
+        frame.pack(fill='both', expand=True)
+
+        # Treeview 表格
+        tree = ttk.Treeview(frame, columns=col_names, show="headings")
+        tree.pack(fill='both', expand=True, side='left')
+
+        # 配置表头
+        for col in col_names:
+            tree.heading(col, text=col)
+            tree.column(col, width=100)
+
+        # 滚动条
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='right', fill='y')
+
+        return tree
+
+    
+    def search_tree(self, tree, query, data_type):
+        """根据查询内容搜索并更新表格"""
+        # 获取原始数据
+        if data_type == "skills":
+            data = self.data_manager.skills
+        elif data_type == "techs":
+            data = self.data_manager.techs
+        elif data_type == "skilllvs":
+            data = self.data_manager.skilllvs
+        elif data_type == "jobs":
+            data = self.data_manager.jobs
+        else:
+            return
+        
+        # 清空表格
+        for item in tree.get_children():
+            tree.delete(item)
+
+        # 执行模糊搜索
+        filtered_data = []
+        query = query.lower()
+        
+        for row in data:
+            if any(query in str(cell).lower() for cell in row):
+                filtered_data.append(row)
+        
+        # 重新插入匹配的数据
+        for row in filtered_data:
+            tree.insert("", "end", values=row)
+
+
     def create_buttons(self, parent, tree, data_type):
         frame = tk.Frame(parent)
         frame.pack(side='bottom', fill='x')
