@@ -108,7 +108,7 @@ function ItemPowerUP:onItemOverLapEvent(charIndex, fromItemIndex, targetItemInde
     if rate < LevelRate[rawLv + 1] then
       if (data.level or 0) > 0 then
         if data.level >= SAVE_LEVEL2 then
-          if math.random(0, 2) == 1 then
+          if math.random(0, 10) == 1 then
             data.level = 0;
           else
             data.level = data.level - math.random(1, data.level / 2)
