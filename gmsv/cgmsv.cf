@@ -78,7 +78,7 @@ coralloginpoint=0,43100,120,107
 //新城登陆点设置
 shinseiloginpoint=0,59520,140,105
 //自定义不掉装备耐久地图开关 (0:系统默认设置; 1:tohelosfloor中设置的地图不掉装备耐久; -1:tohelosfloor中设置的地图掉装备耐久,未设置地图不掉)
-duelmapopt=0
+duelmapopt=-1
 //不掉装备耐久地图列表,duelmapopt=0时,这个设置无效(不要设置超过100张地图)
 duelmap=1401,33221,43131,59545,59553
 //诱魔香与驱魔香开关(0:不限制,任何地图可以使用; 1:tohelosfloor中设置的地图才可以使用; -1:tohelosfloor中设置的地图不可以使用)

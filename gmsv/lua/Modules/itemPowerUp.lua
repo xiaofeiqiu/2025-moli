@@ -1,3 +1,4 @@
+---@class ItemPowerUP: ModuleType
 local ItemPowerUP = ModuleBase:createModule('itemPowerUp')
 
 local MAX_LEVEL = 20;
@@ -6,15 +7,11 @@ local SAVE_LEVEL = 7;
 local LevelRate = { 0, 0, 0, 10, 20, 30, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 93, 93, 96, 96, 97, 97, 98, 98, 99, 99, 99, 99, 99, 99, 99, 99 }
 
 function ItemPowerUP:setItemData(itemIndex, value)
-  ---@type ItemExt
-  local itemExt = getModule('itemExt')
-  return itemExt:setItemData(itemIndex, value)
+  return Item.SetExtData(itemIndex, "ItemPowerUP", value);
 end
 
 function ItemPowerUP:getItemData(itemIndex)
-  ---@type ItemExt
-  local itemExt = getModule('itemExt')
-  return itemExt:getItemData(itemIndex)
+  return Item.GetExtData(itemIndex, "ItemPowerUP");
 end
 
 --CharIndex: 数值型 响应事件的对象index（攻击者），该值由Lua引擎传递给本函数。
@@ -121,7 +118,8 @@ function ItemPowerUP:onItemOverLapEvent(charIndex, fromItemIndex, targetItemInde
         end
         self:setItemData(targetItemIndex, data);
       end
-      NLG.SystemMessage(charIndex, "[系统] 强化【" .. Item.GetData(targetItemIndex, CONST.道具_名字) .. "】失败。【" .. rate .. '/' .. LevelRate[rawLv + 1] .. "】");
+      NLG.SystemMessage(charIndex,
+        "[系统] 强化【" .. Item.GetData(targetItemIndex, CONST.道具_名字) .. "】失败。【" .. rate .. '/' .. LevelRate[rawLv + 1] .. "】");
       if data.level > 0 then
         Item.SetData(targetItemIndex, CONST.道具_名字, data.name .. ' +' .. data.level);
       else
@@ -140,7 +138,8 @@ function ItemPowerUP:onItemOverLapEvent(charIndex, fromItemIndex, targetItemInde
     if Item.Types.isWeapon(type) then
     elseif Item.Types.isArmour(type) then
     end
-    NLG.SystemMessage(charIndex, "[系统] 强化【" .. Item.GetData(targetItemIndex, CONST.道具_名字) .. "】成功。【" .. rate .. '/' .. LevelRate[rawLv + 1] .. "】");
+    NLG.SystemMessage(charIndex,
+      "[系统] 强化【" .. Item.GetData(targetItemIndex, CONST.道具_名字) .. "】成功。【" .. rate .. '/' .. LevelRate[rawLv + 1] .. "】");
     self:setItemData(targetItemIndex, data);
     Char.DelItem(charIndex, Item.GetData(fromItemIndex, CONST.道具_ID), 1);
     Item.UpItem(charIndex, -1);
