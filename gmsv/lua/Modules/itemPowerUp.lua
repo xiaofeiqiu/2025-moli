@@ -111,7 +111,7 @@ function ItemPowerUP:onItemOverLapEvent(charIndex, fromItemIndex, targetItemInde
           if math.random(0, 10) == 1 then
             data.level = 0;
           else
-            data.level = data.level - math.random(1, data.level / 2)
+            data.level = data.level - 1;
           end
         elseif data.level > SAVE_LEVEL then
           data.level = data.level - 1;
